@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"time"
 )
 
 func main() {
@@ -25,8 +26,8 @@ func main() {
 		fmt.Errorf("%v", err)
 	}
 
-	insert(bq)
-	list(bq)
+	insert(bq, "http://localhost", time.Now().Unix(), time.Now().Unix())
+	//list(bq)
 }
 
 func list(bq *bigquery.Service) {
@@ -46,28 +47,18 @@ func list(bq *bigquery.Service) {
 	fmt.Println(string(buf))
 }
 
-func insert(bq *bigquery.Service) {
-	rows := make([]*bigquery.TableDataInsertAllRequestRows, 2)
+func insert(bq *bigquery.Service, url string, start int64, end int64) {
+	rows := make([]*bigquery.TableDataInsertAllRequestRows, 1)
 	rows[0] = &bigquery.TableDataInsertAllRequestRows{
 		Json: map[string]bigquery.JsonValue{
-			"id":    "ida",
-			"item1": "item1a",
-			"item2": "item2a",
-			"item3": "item3a",
-			"date":  "2014/01/01",
-		},
-	}
-	rows[1] = &bigquery.TableDataInsertAllRequestRows{
-		Json: map[string]bigquery.JsonValue{
-			"id":    "idb",
-			"item1": "item1b",
-			"item2": "item2b",
-			"item3": "item3b",
-			"date":  "2014/02/02",
+			"kind":        url,
+			"start":       start,
+			"end":         end,
+			"progress_ms": end - start,
 		},
 	}
 
-	_, err := bq.Tabledata.InsertAll("sinpkmnms", "sample", "test", &bigquery.TableDataInsertAllRequest{
+	_, err := bq.Tabledata.InsertAll("sinpkmnms", "dos", "progres", &bigquery.TableDataInsertAllRequest{
 		Kind: "bigquery#tableDataInsertAllRequest",
 		Rows: rows,
 	}).Do()
