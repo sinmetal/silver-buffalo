@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"time"
 )
 
@@ -26,7 +27,18 @@ func main() {
 		fmt.Errorf("%v", err)
 	}
 
-	insert(bq, "http://localhost", time.Now().Unix(), time.Now().Unix())
+	url := "http://1.cp300demo1.appspot.com/"
+	startNano := time.Now().UnixNano()
+	resp, err := http.Get(url)
+	endNano := time.Now().UnixNano()
+
+	const ns = 1000000000
+	const mics = 1000000
+
+	start := time.Unix(startNano/ns, startNano%ns)
+	end := time.Unix(endNano/ns, endNano%ns)
+
+	insert(bq, url, resp.StatusCode, start.Unix(), end.Unix(), (endNano-startNano)/mics)
 	//list(bq)
 }
 
@@ -47,14 +59,15 @@ func list(bq *bigquery.Service) {
 	fmt.Println(string(buf))
 }
 
-func insert(bq *bigquery.Service, url string, start int64, end int64) {
+func insert(bq *bigquery.Service, url string, statusCode int, start int64, end int64, ns int64) {
 	rows := make([]*bigquery.TableDataInsertAllRequestRows, 1)
 	rows[0] = &bigquery.TableDataInsertAllRequestRows{
 		Json: map[string]bigquery.JsonValue{
-			"kind":        url,
+			"url":         url,
+			"status_code": statusCode,
 			"start":       start,
 			"end":         end,
-			"progress_ms": end - start,
+			"progres_ms":  ns,
 		},
 	}
 
