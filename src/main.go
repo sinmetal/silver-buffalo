@@ -6,11 +6,18 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"runtime"
 	"sync"
 	"time"
 )
 
 func main() {
+	fmt.Println("20141122-2023")
+	fmt.Println(runtime.NumCPU())
+	fmt.Println(runtime.GOMAXPROCS(0))
+	fmt.Println(runtime.NumGoroutine())
+	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	iss := "777125258302-0n8r217cif8jcape5c1morlcb8j6i001@developer.gserviceaccount.com"
 	scope := bigquery.BigqueryScope
 
@@ -31,7 +38,7 @@ func main() {
 	var i int = 0
 	var wg sync.WaitGroup
 	for {
-		for j := 0; j < 50; j++ {
+		for j := 0; j < 30; j++ {
 			wg.Add(1)
 			go run(fmt.Sprint(i, ":", j), url, bq, &wg)
 		}
@@ -51,6 +58,7 @@ func run(id string, url string, bq *bigquery.Service, wg *sync.WaitGroup) {
 		wg.Done()
 		return
 	}
+	resp.Body.Close()
 	endNano := time.Now().UnixNano()
 
 	const ns = 1000000000
