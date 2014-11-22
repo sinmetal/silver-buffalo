@@ -3,7 +3,6 @@ package main
 import (
 	"code.google.com/p/goauth2/oauth/jwt"
 	bigquery "code.google.com/p/google-api-go-client/bigquery/v2"
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -40,25 +39,6 @@ func main() {
 		time.Sleep(1 * time.Second)
 	}
 	wg.Wait()
-
-	//list(bq)
-}
-
-func list(bq *bigquery.Service) {
-	call := bq.Tabledata.List("sinpkmnms", "sample", "persons")
-	call.MaxResults(10)
-	list, err := call.Do()
-	if err != nil {
-		fmt.Errorf("%v", err)
-		return
-	}
-
-	buf, err := json.Marshal(list)
-	if err != nil {
-		fmt.Errorf("%v", err)
-		return
-	}
-	fmt.Println(string(buf))
 }
 
 func run(id string, url string, bq *bigquery.Service, wg *sync.WaitGroup) {
