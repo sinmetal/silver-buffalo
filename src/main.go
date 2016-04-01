@@ -1,44 +1,41 @@
 package main
 
 import (
-	"code.google.com/p/goauth2/oauth/jwt"
-	bigquery "code.google.com/p/google-api-go-client/bigquery/v2"
 	"fmt"
-	"io/ioutil"
+	"log"
 	"net/http"
 	"runtime"
 	"sync"
 	"time"
+
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+
+	"google.golang.org/api/bigquery/v2"
 )
 
 func main() {
-	fmt.Println("20141122-2023")
 	fmt.Println(runtime.NumCPU())
 	fmt.Println(runtime.GOMAXPROCS(0))
 	fmt.Println(runtime.NumGoroutine())
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	iss := "777125258302-0n8r217cif8jcape5c1morlcb8j6i001@developer.gserviceaccount.com"
-	scope := bigquery.BigqueryScope
-
-	pem, err := ioutil.ReadFile("/Users/sinmetal/workspace/silver-buffalo/simpkmnms-9d4d8098a498.pem")
-	token := jwt.NewToken(iss, scope, pem)
-
-	transport, err := jwt.NewTransport(token)
-	if err != nil {
-		fmt.Errorf("%v", err)
+	client := &http.Client{
+		Transport: &oauth2.Transport{
+			Source: google.ComputeTokenSource(""),
+		},
 	}
-	client := transport.Client()
+
 	bq, err := bigquery.New(client)
 	if err != nil {
-		fmt.Errorf("%v", err)
+		log.Fatalf("bigquery.New error, %v", err)
 	}
 
-	const url = "http://1.cp300demo1.appspot.com/"
+	const url = "http://cp300demo1.appspot.com/"
 	var i int = 0
 	var wg sync.WaitGroup
 	for {
-		for j := 0; j < 30; j++ {
+		for j := 0; j < 10; j++ {
 			wg.Add(1)
 			go run(fmt.Sprint(i, ":", j), url, bq, &wg)
 		}
@@ -90,7 +87,7 @@ func insert(bq *bigquery.Service, url string, statusCode int, start int64, end i
 
 	var err error
 	for i := 1; i < 10; i++ {
-		_, err = bq.Tabledata.InsertAll("sinpkmnms", "dos", "progres20141122", &bigquery.TableDataInsertAllRequest{
+		_, err = bq.Tabledata.InsertAll("silver-buffalo-sinmetal", "silverbuffalo", "progres", &bigquery.TableDataInsertAllRequest{
 			Kind: "bigquery#tableDataInsertAllRequest",
 			Rows: rows,
 		}).Do()
