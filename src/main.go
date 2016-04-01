@@ -12,13 +12,16 @@ import (
 	"golang.org/x/oauth2/google"
 
 	"google.golang.org/api/bigquery/v2"
+	"google.golang.org/cloud/compute/metadata"
 )
 
 func main() {
-	fmt.Println(runtime.NumCPU())
-	fmt.Println(runtime.GOMAXPROCS(0))
-	fmt.Println(runtime.NumGoroutine())
-	runtime.GOMAXPROCS(runtime.NumCPU())
+	log.Printf("NumCPU = %d", runtime.NumCPU())
+	log.Printf("NumGoroutine = %d", runtime.NumGoroutine())
+
+	if metadata.OnGCE() == false {
+		log.Fatalf("On Compute Engine Only...")
+	}
 
 	client := &http.Client{
 		Transport: &oauth2.Transport{
@@ -31,13 +34,18 @@ func main() {
 		log.Fatalf("bigquery.New error, %v", err)
 	}
 
-	const url = "http://cp300demo1.appspot.com/"
+	target, err := metadata.ProjectAttributeValue("silver_buffalo_target")
+	if err != nil {
+		log.Fatalf("error get project attribute value `silver_buffalo_target`. err = %s", err.Error())
+	}
+	log.Printf("target = %s", target)
+
 	var i int = 0
 	var wg sync.WaitGroup
 	for {
 		for j := 0; j < 10; j++ {
 			wg.Add(1)
-			go run(fmt.Sprint(i, ":", j), url, bq, &wg)
+			go run(fmt.Sprint(i, ":", j), target, bq, &wg)
 		}
 		i++
 		time.Sleep(1 * time.Second)
